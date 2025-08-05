@@ -99,10 +99,11 @@
   <button onclick="addIntentioChain()">➕ Add Chain to Keplr</button>
   <button onclick="connectKeplr()">🔍 Check Address</button>
 
-  <a href="https://faucet.intentio.network" 
+  <!-- Updated Faucet Button -->
+  <a href="https://discord.gg/UCV9p6v2BV" 
      class="faucet-btn" 
      target="_blank" 
-     rel="noopener noreferrer">🚰 Faucet Testnet</a>
+     rel="noopener noreferrer">🚰 Faucet Testnet (Discord)</a>
 
   <div id="wallet-address" style="display: none;">
     <span id="address-text">Wallet Address</span>
@@ -152,22 +153,22 @@
 
     async function addIntentioChain() {
       if (!window.keplr) {
-        alert("Keplr belum terpasang.");
+        alert("Keplr extension is not installed.");
         return;
       }
 
       try {
         await window.keplr.experimentalSuggestChain(chainInfo);
-        alert("✅ Chain Intentio berhasil ditambahkan!");
+        alert("✅ Intentio chain added to Keplr successfully!");
       } catch (err) {
         console.error(err);
-        alert("❌ Gagal menambahkan chain.");
+        alert("❌ Failed to add chain. Check console for details.");
       }
     }
 
     async function connectKeplr() {
       if (!window.keplr) {
-        alert("Keplr extension belum terpasang.");
+        alert("Keplr extension is not installed.");
         return;
       }
 
@@ -181,16 +182,16 @@
         document.getElementById("wallet-address").style.display = "flex";
       } catch (err) {
         console.error(err);
-        alert("Gagal koneksi ke Keplr.");
+        alert("❌ Failed to connect to Keplr.");
       }
     }
 
     function copyAddress() {
       const address = document.getElementById("address-text").textContent;
       navigator.clipboard.writeText(address).then(() => {
-        alert("✅ Alamat berhasil disalin!");
+        alert("📋 Address copied to clipboard!");
       }).catch(err => {
-        console.error("Gagal salin alamat:", err);
+        console.error("Failed to copy address:", err);
       });
     }
   </script>
