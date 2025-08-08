@@ -1,0 +1,227 @@
+<!doctype html>
+
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ApeChain Testnet — Add Chain</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#7c3aed;
+      --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.03);
+    }
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{background:linear-gradient(180deg,#061024 0%, #081427 100%);display:flex;align-items:center;justify-content:center;padding:24px}
+    .container{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:hidden;display:flex;flex-direction:row}
+    /* responsive: stack on small screens */
+    @media (max-width:880px){.container{flex-direction:column}}.left{flex:1;padding:28px}
+.right{width:380px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));padding:24px;display:flex;flex-direction:column;gap:12px}
+@media (max-width:880px){.right{width:100%}}
+
+h1{color:#fff;margin:0 0 8px;font-size:20px}
+p.lead{color:var(--muted);margin:0 0 18px}
+
+label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+input,textarea,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:#e6eef8;outline:none}
+.row{display:flex;gap:12px}
+.row .col{flex:1}
+.card{background:transparent;border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03)}
+
+.btn{display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;border:none;cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,var(--accent),#5b21b6);color:white}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--muted)}
+
+.muted{color:var(--muted);font-size:13px}
+footer{color:var(--muted);font-size:13px;margin-top:8px}
+
+.small{font-size:12px;color:var(--muted)}
+pre{background:rgba(0,0,0,0.25);padding:10px;border-radius:10px;color:#dbeafe;overflow:auto}
+
+.status{padding:10px;border-radius:10px;font-weight:600}
+.success{background:rgba(16,185,129,0.12);color:#a7f3d0}
+.error{background:rgba(239,68,68,0.12);color:#fecaca}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <h1>ApeChain Testnet — Add Chain</h1>
+      <p class="lead">Form ini membantu menambahkan ApeChain Testnet ke wallet (MetaMask compatible). Semua field dapat diedit — sesuaikan jika diperlukan.</p><div class="card">
+    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+      <div>
+        <div class="small">Faucet</div>
+        <a id="faucetLink" href="https://dashboard-testnet.doma.xyz/domain/lork.ape" target="_blank" class="small">https://dashboard-testnet.doma.xyz/domain/lork.ape</a>
+      </div>
+      <div>
+        <button class="btn btn-ghost" id="openFaucet">Buka Faucet</button>
+      </div>
+    </div>
+  </div>
+
+  <form id="chainForm" style="margin-top:16px;display:grid;gap:12px">
+    <div>
+      <label>Chain Name</label>
+      <input id="chainName" value="ApeChain Testnet" />
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Chain ID (decimal)</label>
+        <input id="chainId" value="33111" />
+      </div>
+      <div class="col">
+        <label>Chain ID (hex)</label>
+        <input id="chainIdHex" value="0x8157" />
+      </div>
+    </div>
+
+    <div>
+      <label>RPC URL</label>
+      <input id="rpcUrl" value="https://curtis.rpc.caldera.xyz/http" />
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>Native Currency Name</label>
+        <input id="currencyName" value="ApeCoin" />
+      </div>
+      <div class="col">
+        <label>Symbol</label>
+        <input id="currencySymbol" value="APE" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>Decimals</label>
+        <input id="currencyDecimals" value="18" />
+      </div>
+      <div class="col">
+        <label>Block Explorer URL (opsional)</label>
+        <input id="explorerUrl" placeholder="https://explorer.example/" />
+      </div>
+    </div>
+
+    <div>
+      <label>Icon URL (opsional)</label>
+      <input id="iconUrl" placeholder="https://.../icon.png" />
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <button type="button" id="addChainBtn" class="btn btn-primary">Tambahkan ke Wallet</button>
+      <button type="button" id="copyRpc" class="btn btn-ghost">Copy RPC</button>
+      <button type="button" id="copyJson" class="btn btn-ghost">Copy Add-params JSON</button>
+    </div>
+
+    <div id="statusBox" style="margin-top:10px"></div>
+
+    <div style="margin-top:8px">
+      <label class="small">Preview JSON yang akan dikirim ke wallet</label>
+      <pre id="preview" style="height:120px;">{}</pre>
+    </div>
+  </form>
+</div>
+
+<div class="right">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,#0b1220,#081427);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.03)">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 8H9L12 2Z" fill="#7c3aed"/></svg>
+    </div>
+    <div>
+      <div style="color:#fff;font-weight:700">ApeChain Testnet</div>
+      <div class="small">Chain ID: <span id="smallChainId">33111</span> • RPC: <span class="small" id="smallRpc">curtis.rpc.caldera.xyz</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px" class="card">
+    <div class="small">Instruksi singkat</div>
+    <ol style="padding-left:18px;margin:8px 0;color:var(--muted)">
+      <li>Pastikan wallet (MetaMask) terpasang dan terhubung ke situs ini.</li>
+      <li>Sesuaikan field jika diperlukan (explorer, icon, nama).</li>
+      <li>Klik <strong>Tambahkan ke Wallet</strong> untuk mengirim request ke wallet Anda.</li>
+      <li>Jika diminta, konfirmasi di ekstensi wallet.</li>
+    </ol>
+  </div>
+
+  <div style="margin-top:12px;text-align:center">
+    <a id="faucetShort" href="https://dashboard-testnet.doma.xyz/domain/lork.ape" target="_blank" class="small">Buka Faucet untuk dapat test token</a>
+  </div>
+
+  <footer style="margin-top:auto;text-align:center">Made for ApeChain Testnet • rounded responsive full-screen UI</footer>
+</div>
+
+  </div><script>
+  // Utility
+  const $ = id => document.getElementById(id)
+
+  function buildParams(){
+    const chainName = $('chainName').value.trim() || 'ApeChain Testnet'
+    const chainId = parseInt($('chainId').value.trim()||'33111',10)
+    const chainIdHex = $('chainIdHex').value.trim() || '0x'+chainId.toString(16)
+    const rpc = $('rpcUrl').value.trim() || 'https://curtis.rpc.caldera.xyz/http'
+    const currency = {
+      name: $('currencyName').value.trim() || 'ApeCoin',
+      symbol: $('currencySymbol').value.trim() || 'APE',
+      decimals: Number($('currencyDecimals').value) || 18
+    }
+    const explorer = $('explorerUrl').value.trim()
+    const icon = $('iconUrl').value.trim()
+
+    const params = {
+      chainId: chainIdHex,
+      chainName,
+      rpcUrls: [rpc],
+      nativeCurrency: currency
+    }
+    if (explorer) params.blockExplorerUrls = [explorer]
+    if (icon) params.iconUrls = [icon]
+    return params
+  }
+
+  function updatePreview(){
+    const p = buildParams()
+    $('preview').textContent = JSON.stringify(p, null, 2)
+    $('smallChainId').textContent = $('chainId').value
+    try{ $('smallRpc').textContent = new URL($('rpcUrl').value).hostname }catch(e){}
+  }
+
+  // initialize
+  updatePreview()
+  document.querySelectorAll('input').forEach(i => i.addEventListener('input', updatePreview))
+
+  $('openFaucet').addEventListener('click', ()=>window.open($('faucetLink').href,'_blank'))
+  $('faucetShort').addEventListener('click', (e)=>{})
+
+  $('copyRpc').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText($('rpcUrl').value); showStatus('RPC URL disalin ke clipboard','success') }catch(e){ showStatus('Gagal menyalin RPC','error') }
+  })
+
+  $('copyJson').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(JSON.stringify(buildParams())) ; showStatus('JSON add-params disalin','success') }catch(e){ showStatus('Gagal menyalin JSON','error') }
+  })
+
+  $('addChainBtn').addEventListener('click', async ()=>{
+    const params = buildParams()
+    updatePreview()
+    if (!window.ethereum){ showStatus('Wallet tidak ditemukan. Pasang MetaMask atau wallet yang kompatibel.','error'); return }
+
+    try{
+      await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [params] })
+      showStatus('Berhasil mengirim request ke wallet. Konfirmasi pada ekstensi jika diminta.','success')
+    }catch(err){
+      console.error(err)
+      const msg = err && err.message ? err.message : String(err)
+      showStatus('Gagal menambahkan chain: '+msg,'error')
+    }
+  })
+
+  function showStatus(text, kind){
+    const box = $('statusBox')
+    box.innerHTML = `<div class="status ${kind==='success'?'success':'error'}">${text}</div>`
+    setTimeout(()=>{ if (box.firstChild) box.firstChild.remove() }, 8000)
+  }
+</script></body>
+  </html>
