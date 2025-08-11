@@ -47,8 +47,23 @@
   .error { color:#f87171; }
   .success { color:#34d399; }
   .chainid-wrapper {
-    display:flex; gap:6px; flex:1;
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap; /* Biar kalau sempit, pindah baris */
+}
+
+.chainid-wrapper input {
+  flex: 1 1 140px; /* Minimal lebar 140px, sisanya fleksibel */
+}
+
+/* Tambahan: biar tombol paste di sebelah tidak terlalu jauh di HP */
+@media (max-width: 500px) {
+  .value {
+    flex-direction: column;
+    gap: 8px;
   }
+}
 </style>
 </head>
 <body>
