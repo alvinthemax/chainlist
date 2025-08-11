@@ -1,0 +1,171 @@
+<!doctype html>
+
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tambah Jaringan</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#111827; --accent-2:#06b6d4; --success:#10b981; --danger:#ef4444;
+      --glass: rgba(255,255,255,0.03);
+      --radius:12px; --gap:16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071028 0%, #07111a 100%);color:#e6eef6}
+    .wrap{max-width:720px;margin:36px auto;padding:28px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;box-shadow:0 6px 30px rgba(2,6,23,0.7)}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    header h1{font-size:20px;margin:0}
+    .note{background:var(--glass);padding:12px;border-radius:10px;color:var(--muted);font-size:13px;margin-bottom:18px}form{display:grid;gap:14px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input[type=text], input[type=url], input[type=number]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:15px}
+input:focus{outline:none;box-shadow:0 0 0 4px rgba(6,182,212,0.06);border-color:rgba(6,182,212,0.2)}
+
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+.btn-area{display:flex;gap:12px;align-items:center;margin-top:10px}
+.btn{padding:12px 20px;border-radius:999px;border:0;background:linear-gradient(90deg,#0b1220,#0b1220);color:#fff;cursor:pointer;font-weight:600}
+.btn.primary{background:linear-gradient(90deg,#06b6d4,#0ea5e9);color:#022036}
+.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04)}
+
+.preview{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);font-size:14px}
+.row-preview{display:flex;justify-content:space-between;margin-bottom:8px}
+.error{color:var(--danger);font-size:13px}
+.success{color:var(--success);font-size:13px}
+
+@media (max-width:600px){.row{grid-template-columns:1fr}.wrap{margin:18px;padding:18px}}
+
+  </style>
+</head>
+<body>
+  <main class="wrap" role="main">
+    <header>
+      <h1>Edit Jaringan</h1>
+    </header><div class="note">Penyedia layanan internet yang tidak dikenal dapat mengekspos keadaan blockchain palsu dan melacak aktivitas jaringan Anda. Tambahkan jaringan hanya jika Anda sepenuhnya mempercayainya.</div>
+
+<form id="networkForm" novalidate>
+  <div>
+    <label for="name">Jaringan</label>
+    <input id="name" name="name" type="text" placeholder="Nama jaringan (mis. Artery)" value="Artery" required />
+    <div class="hint">Nama yang akan muncul di dompet.</div>
+  </div>
+
+  <div>
+    <label for="rpc">URL RPC</label>
+    <input id="rpc" name="rpc" type="url" placeholder="https://.../rpc" value="https://subnets.avax.network/artery/mainnet/rpc" required />
+    <div class="hint">Endpoint RPC lengkap (wajib untuk terhubung).</div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="chainId">ID Rantai</label>
+      <input id="chainId" name="chainId" type="number" placeholder="4313" value="4313" required />
+      <div class="hint">Angka unik jaringan (mis. 4313).</div>
+    </div>
+
+    <div>
+      <label for="symbol">Simbol</label>
+      <input id="symbol" name="symbol" type="text" placeholder="ARTR" value="ARTERY" required />
+      <div class="hint">Simbol token singkat (mis. ARTERY).</div>
+    </div>
+  </div>
+
+  <div>
+    <label for="explorer">Penjelajah Blockchain (opsional)</label>
+    <input id="explorer" name="explorer" type="url" placeholder="https://explorer.example.com" value="https://subnets.avax.network/artery" />
+    <div class="hint">URL untuk melihat transaksi, blok, dan alamat (opsional).</div>
+  </div>
+
+  <div class="full">
+    <button type="submit" class="btn primary">Konfirmasi</button>
+    <button type="button" id="resetBtn" class="btn ghost">Reset</button>
+  </div>
+
+  <div class="full preview" aria-live="polite">
+    <strong>Pratinjau konfigurasi</strong>
+    <div id="previewList">
+      <div class="row-preview"><span>Nama:</span><span id="p_name">Artery</span></div>
+      <div class="row-preview"><span>RPC URL:</span><span id="p_rpc">https://subnets.avax.network/artery/mainnet/rpc</span></div>
+      <div class="row-preview"><span>ID Rantai:</span><span id="p_chain">4313</span></div>
+      <div class="row-preview"><span>Simbol:</span><span id="p_symbol">ARTERY</span></div>
+      <div class="row-preview"><span>Explorer:</span><span id="p_explorer">https://subnets.avax.network/artery</span></div>
+    </div>
+    <div id="statusMsg" class="hint" style="margin-top:10px"></div>
+  </div>
+
+</form>
+
+  </main>  <script>
+    const form = document.getElementById('networkForm');
+    const fields = ['name','rpc','chainId','symbol','explorer'].reduce((acc,id)=>{acc[id]=document.getElementById(id);return acc},{})
+    const preview = {
+      p_name:document.getElementById('p_name'), p_rpc:document.getElementById('p_rpc'), p_chain:document.getElementById('p_chain'), p_symbol:document.getElementById('p_symbol'), p_explorer:document.getElementById('p_explorer'), status:document.getElementById('statusMsg')
+    }
+
+    function updatePreview(){
+      preview.p_name.textContent = fields.name.value || '—';
+      preview.p_rpc.textContent = fields.rpc.value || '—';
+      preview.p_chain.textContent = fields.chainId.value || '—';
+      preview.p_symbol.textContent = fields.symbol.value || '—';
+      preview.p_explorer.textContent = fields.explorer.value || '—';
+      preview.status.textContent = '';
+    }
+
+    // Basic validation helpers
+    function isValidUrl(u){ try{ new URL(u); return true }catch(e){return false} }
+
+    form.addEventListener('input', updatePreview);
+    updatePreview();
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      // Clear previous message
+      preview.status.textContent = '';
+
+      // Validate required
+      const name = fields.name.value.trim();
+      const rpc = fields.rpc.value.trim();
+      const chain = fields.chainId.value.trim();
+      const symbol = fields.symbol.value.trim();
+      const explorer = fields.explorer.value.trim();
+
+      // Validate
+      const errors = [];
+      if(!name) errors.push('Nama jaringan wajib diisi.');
+      if(!rpc || !isValidUrl(rpc)) errors.push('URL RPC tidak valid.');
+      if(!chain || !/^\d+$/.test(chain)) errors.push('ID Rantai harus berupa angka.');
+      if(!symbol) errors.push('Simbol wajib diisi.');
+      if(explorer && !isValidUrl(explorer)) errors.push('URL penjelajah tidak valid.');
+
+      if(errors.length){
+        preview.status.innerHTML = errors.map(e=>`<div class="error">● ${e}</div>`).join('');
+        return;
+      }
+
+      // Build payload (this is where you'd call wallet API or save to backend)
+      const payload = {
+        name, rpc, chainId: Number(chain), symbol, explorer: explorer || null
+      }
+
+      // Simulate saving + success message
+      preview.status.innerHTML = `<div class="success">Konfigurasi siap ditambahkan. Objek JSON dibuat di konsol (lihat console).</div>`;
+      console.log('Network payload:', payload);
+
+      // Optionally, show a copy-to-clipboard button
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(JSON.stringify(payload, null, 2)).then(()=>{
+          preview.status.innerHTML += `<div class="hint">JSON konfigurasi disalin ke clipboard.</div>`;
+        }).catch(()=>{});
+      }
+    })
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      fields.name.value='Artery'; fields.rpc.value='https://subnets.avax.network/artery/mainnet/rpc'; fields.chainId.value='4313'; fields.symbol.value='ARTERY'; fields.explorer.value='https://subnets.avax.network/artery';
+      updatePreview();
+      preview.status.textContent='Form di-reset ke nilai contoh.';
+    })
+  </script></body>
+      </html>
