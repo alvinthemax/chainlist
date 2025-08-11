@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tambah Jaringan ke Wallet</title>
+<style>
+  body {
+    margin:0; font-family: 'Segoe UI', Arial, sans-serif;
+    background:#0f172a; color:#f8fafc;
+  }
+  .container {
+    min-height:100vh; display:flex; flex-direction:column;
+    padding:20px; box-sizing:border-box;
+  }
+  h1 { margin:0 0 10px 0; font-size:1.6rem; }
+  p.desc { font-size:0.95rem; color:#94a3b8; margin-bottom:20px; }
+  .field {
+    background:#1e293b; border-radius:10px;
+    padding:12px; margin-bottom:14px;
+  }
+  .label {
+    font-size:0.8rem; color:#94a3b8; margin-bottom:6px;
+  }
+  .value {
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .value input {
+    flex:1; font-size:0.95rem; padding:6px 8px;
+    background:#0f172a; color:#f1f5f9; border:1px solid #334155;
+    border-radius:6px;
+  }
+  .paste-btn {
+    background:#334155; border:0; color:#f1f5f9;
+    border-radius:6px; padding:6px 10px;
+    cursor:pointer; font-size:0.8rem;
+  }
+  .paste-btn:hover { background:#475569; }
+  .btn {
+    padding:14px; font-size:1rem; font-weight:600;
+    border-radius:8px; border:0; cursor:pointer;
+    margin-top:auto;
+  }
+  .primary { background:#06b6d4; color:#0f172a; }
+  .primary:hover { background:#0ea5e9; }
+  .msg { font-size:0.9rem; margin-top:14px; }
+  .error { color:#f87171; }
+  .success { color:#34d399; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Tambahkan Jaringan ke Wallet</h1>
+  <p class="desc">Isi data jaringan di bawah, lalu klik tombol untuk menambahkannya ke wallet Anda.</p>
+  
+  <div class="field">
+    <div class="label">Nama Jaringan</div>
+    <div class="value">
+      <input id="valName" placeholder="Contoh: Polygon Mainnet">
+      <button class="paste-btn" data-paste="valName">Paste</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Chain ID</div>
+    <div class="value">
+      <input id="valChain" placeholder="Contoh: 137 atau 0x89">
+      <button class="paste-btn" data-paste="valChain">Paste</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">RPC URL</div>
+    <div class="value">
+      <input id="valRPC" placeholder="https://...">
+      <button class="paste-btn" data-paste="valRPC">Paste</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Nama Mata Uang</div>
+    <div class="value">
+      <input id="valCurrency" placeholder="Contoh: MATIC">
+      <button class="paste-btn" data-paste="valCurrency">Paste</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Simbol</div>
+    <div class="value">
+      <input id="valSymbol" placeholder="Contoh: MATIC">
+      <button class="paste-btn" data-paste="valSymbol">Paste</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Block Explorer URL (Opsional)</div>
+    <div class="value">
+      <input id="valExplorer" placeholder="https://explorer...">
+      <button class="paste-btn" data-paste="valExplorer">Paste</button>
+    </div>
+  </div>
+  
+  <button id="addBtn" class="btn primary">Tambahkan ke Wallet</button>
+  <div id="status" class="msg"></div>
+</div>
+
+<script>
+  const statusEl = document.getElementById('status');
+
+  function setStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = 'msg ' + (type || '');
+  }
+
+  // Tombol paste dari clipboard
+  document.querySelectorAll('.paste-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-paste');
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById(id).value = text;
+        setStatus(`Ditempel ke ${id}: ${text}`, 'success');
+        setTimeout(() => setStatus('', ''), 2000);
+      } catch {
+        setStatus('Gagal membaca clipboard.', 'error');
+      }
+    });
+  });
+
+  // Fungsi convert chain ID ke hex jika input berupa angka
+  function normalizeChainId(id) {
+    if (/^\d+$/.test(id)) {
+      return '0x' + parseInt(id, 10).toString(16);
+    }
+    return id.toLowerCase();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    if (!window.ethereum) {
+      setStatus('Wallet tidak terdeteksi.', 'error');
+      return;
+    }
+
+    const chainId = normalizeChainId(document.getElementById('valChain').value.trim());
+    const chainName = document.getElementById('valName').value.trim();
+    const rpcUrl = document.getElementById('valRPC').value.trim();
+    const currencyName = document.getElementById('valCurrency').value.trim();
+    const symbol = document.getElementById('valSymbol').value.trim();
+    const explorer = document.getElementById('valExplorer').value.trim();
+
+    const networkParams = {
+      chainId,
+      chainName,
+      rpcUrls: [rpcUrl],
+      nativeCurrency: {
+        name: currencyName,
+        symbol: symbol,
+        decimals: 18
+      }
+    };
+    if (explorer) networkParams.blockExplorerUrls = [explorer];
+
+    setStatus('Meminta wallet...', '');
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId }]
+      });
+      setStatus(`Berhasil berpindah ke jaringan ${chainName}.`, 'success');
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [networkParams]
+          });
+          setStatus('Jaringan berhasil ditambahkan.', 'success');
+        } catch (addError) {
+          if (addError.code === 4001) {
+            setStatus('Dibatalkan oleh pengguna.', 'error');
+          } else {
+            setStatus('Gagal menambahkan jaringan.', 'error');
+          }
+        }
+      } else if (switchError.code === 4001) {
+        setStatus('Dibatalkan oleh pengguna.', 'error');
+      } else {
+        setStatus('Gagal berpindah jaringan.', 'error');
+      }
+    }
+  });
+</script>
+</body>
+</html>
