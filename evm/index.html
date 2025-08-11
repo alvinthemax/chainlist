@@ -46,6 +46,9 @@
   .msg { font-size:0.9rem; margin-top:14px; }
   .error { color:#f87171; }
   .success { color:#34d399; }
+  .chainid-wrapper {
+    display:flex; gap:6px; flex:1;
+  }
 </style>
 </head>
 <body>
@@ -64,8 +67,12 @@
   <div class="field">
     <div class="label">Chain ID</div>
     <div class="value">
-      <input id="valChain" placeholder="Contoh: 137 atau 0x89">
-      <button class="paste-btn" data-paste="valChain">Paste</button>
+      <div class="chainid-wrapper">
+        <input id="valChainDec" placeholder="Desimal (contoh: 137)">
+        <input id="valChainHex" placeholder="Hex (contoh: 0x89)">
+      </div>
+      <button class="paste-btn" data-paste="valChainDec">Paste Dec</button>
+      <button class="paste-btn" data-paste="valChainHex">Paste Hex</button>
     </div>
   </div>
   
@@ -107,10 +114,41 @@
 
 <script>
   const statusEl = document.getElementById('status');
+  const decInput = document.getElementById('valChainDec');
+  const hexInput = document.getElementById('valChainHex');
+  let lastEdited = null;
 
   function setStatus(msg, type) {
     statusEl.textContent = msg;
     statusEl.className = 'msg ' + (type || '');
+  }
+
+  // Konversi
+  function decToHex(dec) {
+    if (!/^\d+$/.test(dec)) return '';
+    return '0x' + parseInt(dec, 10).toString(16);
+  }
+  function hexToDec(hex) {
+    if (!/^0x[0-9a-fA-F]+$/.test(hex)) return '';
+    return parseInt(hex, 16).toString(10);
+  }
+
+  decInput.addEventListener('input', () => {
+    lastEdited = 'dec';
+    const hex = decToHex(decInput.value.trim());
+    hexInput.value = hex || '';
+  });
+
+  hexInput.addEventListener('input', () => {
+    lastEdited = 'hex';
+    const dec = hexToDec(hexInput.value.trim());
+    decInput.value = dec || '';
+  });
+
+  function getNormalizedChainId() {
+    if (lastEdited === 'hex') return hexInput.value.trim().toLowerCase();
+    if (lastEdited === 'dec') return decToHex(decInput.value.trim());
+    return '';
   }
 
   // Tombol paste dari clipboard
@@ -120,6 +158,7 @@
       try {
         const text = await navigator.clipboard.readText();
         document.getElementById(id).value = text;
+        document.getElementById(id).dispatchEvent(new Event('input'));
         setStatus(`Ditempel ke ${id}: ${text}`, 'success');
         setTimeout(() => setStatus('', ''), 2000);
       } catch {
@@ -128,21 +167,14 @@
     });
   });
 
-  // Fungsi convert chain ID ke hex jika input berupa angka
-  function normalizeChainId(id) {
-    if (/^\d+$/.test(id)) {
-      return '0x' + parseInt(id, 10).toString(16);
-    }
-    return id.toLowerCase();
-  }
-
+  // Tambah jaringan
   document.getElementById('addBtn').addEventListener('click', async () => {
     if (!window.ethereum) {
       setStatus('Wallet tidak terdeteksi.', 'error');
       return;
     }
 
-    const chainId = normalizeChainId(document.getElementById('valChain').value.trim());
+    const chainId = getNormalizedChainId();
     const chainName = document.getElementById('valName').value.trim();
     const rpcUrl = document.getElementById('valRPC').value.trim();
     const currencyName = document.getElementById('valCurrency').value.trim();
@@ -177,16 +209,10 @@
           });
           setStatus('Jaringan berhasil ditambahkan.', 'success');
         } catch (addError) {
-          if (addError.code === 4001) {
-            setStatus('Dibatalkan oleh pengguna.', 'error');
-          } else {
-            setStatus('Gagal menambahkan jaringan.', 'error');
-          }
+          setStatus(addError.code === 4001 ? 'Dibatalkan oleh pengguna.' : 'Gagal menambahkan jaringan.', 'error');
         }
-      } else if (switchError.code === 4001) {
-        setStatus('Dibatalkan oleh pengguna.', 'error');
       } else {
-        setStatus('Gagal berpindah jaringan.', 'error');
+        setStatus(switchError.code === 4001 ? 'Dibatalkan oleh pengguna.' : 'Gagal berpindah jaringan.', 'error');
       }
     }
   });
