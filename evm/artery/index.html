@@ -1,141 +1,167 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Tambah Jaringan — Popup ke Wallet</title>
-  <style>
-    body{font-family:Inter,system-ui,Arial;margin:0;background:#f4f7fb;color:#0b1220;display:flex;align-items:center;justify-content:center;height:100vh}
-    .overlay{position:fixed;inset:0;background:rgba(3,7,18,0.5);display:flex;align-items:center;justify-content:center}
-    .modal{width:420px;background:#fff;border-radius:12px;padding:20px;box-shadow:0 10px 30px rgba(2,6,23,0.2)}
-    h2{margin:0 0 8px 0;font-size:18px}
-    p{margin:0 0 14px 0;color:#445}
-    .fields{background:#f7fafc;border-radius:8px;padding:10px;margin-bottom:14px;font-size:14px}
-    .row{display:flex;justify-content:space-between;margin-bottom:6px}
-    .muted{color:#6b7280;font-size:13px}
-    button{padding:10px 14px;border-radius:999px;border:0;cursor:pointer;font-weight:600}
-    .primary{background:#06b6d4;color:#032;box-shadow:0 6px 18px rgba(6,182,212,0.12)}
-    .ghost{background:transparent;border:1px solid #e6eef6;color:#0b1220}
-    .msg{margin-top:12px;font-size:13px}
-    .error{color:#ef4444}
-    .success{color:#059669}
-    .small{font-size:12px;color:#64748b;margin-top:8px}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tambahkan Jaringan Artery</title>
+<style>
+  body {
+    margin:0; font-family: 'Segoe UI', Arial, sans-serif;
+    background:#0f172a; color:#f8fafc;
+  }
+  .container {
+    min-height:100vh; display:flex; flex-direction:column;
+    padding:20px; box-sizing:border-box;
+  }
+  h1 { margin:0 0 10px 0; font-size:1.6rem; }
+  p.desc { font-size:0.95rem; color:#94a3b8; margin-bottom:20px; }
+  .field {
+    background:#1e293b; border-radius:10px;
+    padding:12px; margin-bottom:14px;
+  }
+  .label {
+    font-size:0.8rem; color:#94a3b8; margin-bottom:6px;
+  }
+  .value {
+    display:flex; justify-content:space-between; align-items:center;
+    gap:10px; flex-wrap:wrap;
+  }
+  .value span {
+    font-size:0.95rem; word-break:break-all;
+    flex:1;
+  }
+  .copy-btn {
+    background:#334155; border:0; color:#f1f5f9;
+    border-radius:6px; padding:6px 10px;
+    cursor:pointer; font-size:0.8rem;
+  }
+  .copy-btn:hover { background:#475569; }
+  .btn {
+    padding:14px; font-size:1rem; font-weight:600;
+    border-radius:8px; border:0; cursor:pointer;
+    margin-top:auto;
+  }
+  .primary { background:#06b6d4; color:#0f172a; }
+  .primary:hover { background:#0ea5e9; }
+  .msg { font-size:0.9rem; margin-top:14px; }
+  .error { color:#f87171; }
+  .success { color:#34d399; }
+</style>
 </head>
 <body>
-  <div class="overlay" role="dialog" aria-modal="true">
-    <div class="modal" role="document">
-      <h2>Tambahkan jaringan ke Wallet</h2>
-      <p class="muted">Menambahkan jaringan Artery ke wallet Anda. Pastikan Anda mempercayai RPC sebelum melanjutkan.</p>
-
-      <div class="fields" aria-hidden="false">
-        <div class="row"><strong>Nama</strong><span>Artery</span></div>
-        <div class="row"><strong>Chain ID</strong><span>4313 (0x10d9)</span></div>
-        <div class="row"><strong>RPC URL</strong><span style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">https://subnets.avax.network/artery/mainnet/rpc</span></div>
-        <div class="row"><strong>Simbol</strong><span>ARTERY</span></div>
-        <div class="row"><strong>Explorer</strong><span style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">https://subnets.avax.network/artery</span></div>
-      </div>
-
-      <div style="display:flex;gap:8px">
-        <button id="addBtn" class="primary">Tambahkan ke Wallet</button>
-        <button id="closeBtn" class="ghost">Tutup</button>
-      </div>
-
-      <div id="status" class="msg small" aria-live="polite"></div>
+<div class="container">
+  <h1>Tambahkan Jaringan ke Wallet</h1>
+  <p class="desc">Anda akan menambahkan jaringan <strong>Artery</strong> ke wallet Anda. Pastikan Anda mempercayai RPC ini sebelum melanjutkan.</p>
+  
+  <div class="field">
+    <div class="label">Nama Jaringan</div>
+    <div class="value">
+      <span id="valName">Artery</span>
+      <button class="copy-btn" data-copy="valName">Copy</button>
     </div>
   </div>
+  
+  <div class="field">
+    <div class="label">Chain ID</div>
+    <div class="value">
+      <span id="valChain">4313 (0x10d9)</span>
+      <button class="copy-btn" data-copy="valChain">Copy</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">RPC URL</div>
+    <div class="value">
+      <span id="valRPC">https://subnets.avax.network/artery/mainnet/rpc</span>
+      <button class="copy-btn" data-copy="valRPC">Copy</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Simbol</div>
+    <div class="value">
+      <span id="valSymbol">ARTERY</span>
+      <button class="copy-btn" data-copy="valSymbol">Copy</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Block Explorer</div>
+    <div class="value">
+      <span id="valExplorer">https://subnets.avax.network/artery</span>
+      <button class="copy-btn" data-copy="valExplorer">Copy</button>
+    </div>
+  </div>
+  
+  <button id="addBtn" class="btn primary">Tambahkan ke Wallet</button>
+  <div id="status" class="msg"></div>
+</div>
 
-  <script>
-    // Pengaturan jaringan — sesuaikan jika perlu
-    const networkParams = {
-      chainId: '0x10d9', // 4313 -> 0x10d9
-      chainName: 'Artery',
-      rpcUrls: ['https://subnets.avax.network/artery/mainnet/rpc'],
-      nativeCurrency: {
-        name: 'ARTERY',
-        symbol: 'ARTERY',
-        decimals: 18
-      },
-      blockExplorerUrls: ['https://subnets.avax.network/artery']
-    };
+<script>
+  const networkParams = {
+    chainId: '0x10d9', // 4313 hex
+    chainName: 'Artery',
+    rpcUrls: ['https://subnets.avax.network/artery/mainnet/rpc'],
+    nativeCurrency: {
+      name: 'ARTERY',
+      symbol: 'ARTERY',
+      decimals: 18
+    },
+    blockExplorerUrls: ['https://subnets.avax.network/artery']
+  };
 
-    const statusEl = document.getElementById('status');
-    const addBtn = document.getElementById('addBtn');
-    const closeBtn = document.getElementById('closeBtn');
+  const statusEl = document.getElementById('status');
 
-    function setStatus(msg, cls){
-      statusEl.textContent = msg;
-      statusEl.className = 'msg small' + (cls ? ' ' + cls : '');
+  function setStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = 'msg ' + (type || '');
+  }
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-copy');
+      const val = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(val).then(() => {
+        setStatus(`Disalin: ${val}`, 'success');
+        setTimeout(() => setStatus('', ''), 2000);
+      });
+    });
+  });
+
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    if (!window.ethereum) {
+      setStatus('Wallet tidak terdeteksi.', 'error');
+      return;
     }
-
-    // Coba switch dulu, jika error code 4902 -> tambahkan chain
-    async function addOrSwitchNetwork() {
-      if (!window.ethereum) {
-        setStatus('Wallet (seperti MetaMask) tidak terdeteksi. Pasang ekstensi wallet terlebih dahulu.', 'error');
-        return;
-      }
-
-      try {
-        // Coba switch ke chain jika sudah tersedia
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: networkParams.chainId }]
-        });
-        setStatus('Berhasil berpindah ke jaringan Artery.', 'success');
-      } catch (switchError) {
-        // Jika chain belum ada di wallet, error.code biasanya 4902 (MetaMask)
-        if (switchError && (switchError.code === 4902 || /Unrecognized chain/i.test(switchError.message))) {
-          try {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [networkParams]
-            });
-            setStatus('Jaringan berhasil ditambahkan dan dipilih di wallet.', 'success');
-          } catch (addError) {
-            // Pengguna mungkin menolak atau wallet menolak menambah
-            console.error('Add chain error:', addError);
-            if (addError.code === 4001) {
-              setStatus('Permintaan dibatalkan oleh pengguna.', 'error');
-            } else {
-              setStatus('Gagal menambahkan jaringan ke wallet: ' + (addError.message || addError), 'error');
-            }
-          }
-        } else {
-          // Lainnya: pengguna menolak switch, atau error lain
-          console.error('Switch chain error:', switchError);
-          if (switchError.code === 4001) {
-            setStatus('Permintaan berpindah jaringan dibatalkan oleh pengguna.', 'error');
+    setStatus('Meminta wallet...', '');
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: networkParams.chainId }]
+      });
+      setStatus('Berhasil berpindah ke jaringan Artery.', 'success');
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [networkParams]
+          });
+          setStatus('Jaringan berhasil ditambahkan.', 'success');
+        } catch (addError) {
+          if (addError.code === 4001) {
+            setStatus('Dibatalkan oleh pengguna.', 'error');
           } else {
-            setStatus('Gagal berpindah jaringan: ' + (switchError.message || switchError), 'error');
+            setStatus('Gagal menambahkan jaringan.', 'error');
           }
         }
+      } else if (switchError.code === 4001) {
+        setStatus('Dibatalkan oleh pengguna.', 'error');
+      } else {
+        setStatus('Gagal berpindah jaringan.', 'error');
       }
     }
-
-    addBtn.addEventListener('click', async () => {
-      setStatus('Meminta wallet...', '');
-      addBtn.disabled = true;
-      try {
-        await addOrSwitchNetwork();
-      } finally {
-        addBtn.disabled = false;
-      }
-    });
-
-    // Tutup modal — untuk demo kita reload halaman
-    closeBtn.addEventListener('click', () => {
-      location.reload();
-    });
-
-    // OPTIONAL: listen untuk perubahan akun/chain dan beritahu user
-    if (window.ethereum && window.ethereum.on) {
-      window.ethereum.on('chainChanged', (chainId) => {
-        setStatus('Chain berubah ke ' + chainId + '. Jika ini bukan 0x10d9, silakan pilih jaringan Artery.', '');
-      });
-      window.ethereum.on('accountsChanged', (accounts) => {
-        setStatus('Akun wallet berganti. Akun saat ini: ' + (accounts[0] || 'tidak ada'), '');
-      });
-    }
-  </script>
+  });
+</script>
 </body>
 </html>
