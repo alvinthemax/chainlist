@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tambahkan Jaringan ke Wallet</title>
+<style>
+  body {
+    margin:0; font-family: 'Segoe UI', Arial, sans-serif;
+    background:#0f172a; color:#f8fafc;
+  }
+  .container {
+    min-height:100vh; display:flex; flex-direction:column;
+    padding:20px; box-sizing:border-box;
+  }
+  h1 { margin:0 0 10px 0; font-size:1.6rem; }
+  p.desc { font-size:0.95rem; color:#94a3b8; margin-bottom:20px; }
+  .field {
+    background:#1e293b; border-radius:10px;
+    padding:12px; margin-bottom:14px;
+  }
+  .label {
+    font-size:0.8rem; color:#94a3b8; margin-bottom:6px;
+  }
+  .value {
+    display:flex; justify-content:space-between; align-items:center;
+    gap:10px; flex-wrap:wrap;
+  }
+  .value span {
+    font-size:0.95rem; word-break:break-all;
+    flex:1;
+  }
+  .copy-btn {
+    background:#334155; border:0; color:#f1f5f9;
+    border-radius:6px; padding:6px 10px;
+    cursor:pointer; font-size:0.8rem;
+  }
+  .copy-btn:hover { background:#475569; }
+  .btn {
+    padding:14px; font-size:1rem; font-weight:600;
+    border-radius:8px; border:0; cursor:pointer;
+    margin-top:auto;
+  }
+  .primary { background:#06b6d4; color:#0f172a; }
+  .primary:hover { background:#0ea5e9; }
+  .msg { font-size:0.9rem; margin-top:14px; }
+  .error { color:#f87171; }
+  .success { color:#34d399; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Tambahkan Jaringan ke Wallet</h1>
+  <p class="desc">Isi data jaringan di bawah, lalu klik tombol untuk menambahkannya ke wallet Anda.</p>
+  
+  <div class="field">
+    <div class="label">Nama Jaringan</div>
+    <div class="value">
+      <span id="valName">[Nama Jaringan]</span>
+      <button class="copy-btn" data-copy="valName">Copy</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Chain ID</div>
+    <div class="value">
+      <span id="valChain">[Desimal] ([Hex])</span>
+      <button class="copy-btn" data-copy="valChain">Copy</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">RPC URL</div>
+    <div class="value">
+      <span id="valRPC">[RPC URL]</span>
+      <button class="copy-btn" data-copy="valRPC">Copy</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Simbol</div>
+    <div class="value">
+      <span id="valSymbol">[Simbol]</span>
+      <button class="copy-btn" data-copy="valSymbol">Copy</button>
+    </div>
+  </div>
+  
+  <div class="field">
+    <div class="label">Block Explorer</div>
+    <div class="value">
+      <span id="valExplorer">[URL Explorer]</span>
+      <button class="copy-btn" data-copy="valExplorer">Copy</button>
+    </div>
+  </div>
+  
+  <button id="addBtn" class="btn primary">Tambahkan ke Wallet</button>
+  <div id="status" class="msg"></div>
+</div>
+
+<script>
+  const networkParams = {
+    chainId: '[Hex Chain ID]', // contoh: '0x1'
+    chainName: '[Nama Jaringan]',
+    rpcUrls: ['[RPC URL]'],
+    nativeCurrency: {
+      name: '[Nama Mata Uang]',
+      symbol: '[Simbol]',
+      decimals: 18
+    },
+    blockExplorerUrls: ['[URL Explorer]'] // jika ada
+  };
+
+  const statusEl = document.getElementById('status');
+
+  function setStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = 'msg ' + (type || '');
+  }
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-copy');
+      const val = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(val).then(() => {
+        setStatus(`Disalin: ${val}`, 'success');
+        setTimeout(() => setStatus('', ''), 2000);
+      });
+    });
+  });
+
+  document.getElementById('addBtn').addEventListener('click', async () => {
+    if (!window.ethereum) {
+      setStatus('Wallet tidak terdeteksi.', 'error');
+      return;
+    }
+    setStatus('Meminta wallet...', '');
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: networkParams.chainId }]
+      });
+      setStatus(`Berhasil berpindah ke jaringan ${networkParams.chainName}.`, 'success');
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [networkParams]
+          });
+          setStatus('Jaringan berhasil ditambahkan.', 'success');
+        } catch (addError) {
+          if (addError.code === 4001) {
+            setStatus('Dibatalkan oleh pengguna.', 'error');
+          } else {
+            setStatus('Gagal menambahkan jaringan.', 'error');
+          }
+        }
+      } else if (switchError.code === 4001) {
+        setStatus('Dibatalkan oleh pengguna.', 'error');
+      } else {
+        setStatus('Gagal berpindah jaringan.', 'error');
+      }
+    }
+  });
+</script>
+</body>
+</html>
