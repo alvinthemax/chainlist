@@ -5,23 +5,104 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Add / Switch EVM Chain</title>
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:24px;background:#f7fafc;color:#111827}
-    .card{max-width:800px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
-    textarea{width:100%;height:200px;padding:12px;border-radius:8px;border:1px solid #e6eef6;font-family:monospace;resize:vertical}
-    button{padding:0.7rem 1.2rem;font-size:1rem;border-radius:10px;border:0;background:#2563eb;color:white;cursor:pointer}
-    button:active{transform:translateY(1px)}
-    .msg{margin-top:12px;text-align:left;font-size:0.95rem;color:#374151;white-space:pre-wrap}
+    body{
+      font-family:system-ui,Segoe UI,Roboto,Arial;
+      margin:0;
+      padding:32px;
+      background:#f9fafb;
+      color:#111827;
+    }
+    .card{
+      max-width:800px;
+      margin:0 auto;
+      background:#fff;
+      padding:24px;
+      border-radius:16px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.08);
+    }
+    h2{
+      margin-top:0;
+      font-size:1.4rem;
+      color:#1f2937;
+    }
+    .textarea-wrap{
+      position:relative;
+      margin-top:12px;
+    }
+    textarea{
+      width:100%;
+      height:220px;
+      padding:14px;
+      border-radius:12px;
+      border:1px solid #d1d5db;
+      font-family:monospace;
+      font-size:0.95rem;
+      resize:vertical;
+      box-sizing:border-box;
+    }
+    .overlay-btns{
+      position:absolute;
+      top:8px;
+      right:8px;
+      display:flex;
+      gap:6px;
+    }
+    .icon-btn{
+      background:rgba(255,255,255,0.9);
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      padding:6px;
+      cursor:pointer;
+      font-size:1rem;
+      line-height:1;
+      box-shadow:0 2px 4px rgba(0,0,0,0.06);
+      transition:background 0.2s;
+    }
+    .icon-btn:hover{ background:#f3f4f6; }
+    .actions{
+      margin-top:16px;
+      display:flex;
+      gap:10px;
+    }
+    button.main{
+      padding:0.8rem 1.4rem;
+      font-size:1rem;
+      border-radius:10px;
+      border:0;
+      background:#2563eb;
+      color:white;
+      cursor:pointer;
+      box-shadow:0 4px 10px rgba(37,99,235,0.2);
+      transition:background 0.2s;
+    }
+    button.main:hover{ background:#1e40af; }
+    .msg{
+      margin-top:14px;
+      font-size:0.95rem;
+      color:#374151;
+      white-space:pre-wrap;
+      min-height:1.2em;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>Tambah / Switch EVM Chain</h2>
-    <p>Tempel konfigurasi JSON chain sesuai <b>EIP-3085</b> lalu klik tombol.</p>
-    <textarea id="chainJson"></textarea>
-    <div style="margin-top:12px">
-      <button id="useExample">Gunakan Contoh Giwa</button>
-      <button id="addSwitchBtn">Add / Switch Chain</button>
+    <p>Tempel konfigurasi JSON chain sesuai <b>EIP-3085</b>, atau gunakan contoh, lalu klik tombol untuk menambahkan / berpindah jaringan.</p>
+    
+    <div class="textarea-wrap">
+      <textarea id="chainJson"></textarea>
+      <div class="overlay-btns">
+        <button id="pasteBtn" class="icon-btn" title="Paste">📋</button>
+        <button id="copyBtn" class="icon-btn" title="Copy">📑</button>
+      </div>
     </div>
+    
+    <div class="actions">
+      <button id="useExample" class="main" style="background:#059669">Gunakan Contoh Sepolia</button>
+      <button id="addSwitchBtn" class="main">Add / Switch Chain</button>
+    </div>
+    
     <div class="msg" id="msg"></div>
   </div>
 
@@ -30,18 +111,20 @@
     const btn = document.getElementById('addSwitchBtn');
     const useExample = document.getElementById('useExample');
     const textarea = document.getElementById('chainJson');
+    const pasteBtn = document.getElementById('pasteBtn');
+    const copyBtn = document.getElementById('copyBtn');
 
-    // Contoh Giwa Network
-    const GIWA = {
-      chainId: "0x1650e", // 91342
-      chainName: "Giwa Network",
-      rpcUrls: ["https://sepolia-rpc.giwa.io"],
+    // Contoh Ethereum Sepolia (EIP-3085 format)
+    const SEPOLIA = {
+      chainId: "0xaa36a7", // 11155111
+      chainName: "Ethereum Sepolia",
+      rpcUrls: ["https://rpc.sepolia.org"],
       nativeCurrency: {
-        name: "Ethereum",
-        symbol: "ETH",
+        name: "Sepolia Ether",
+        symbol: "SEP",
         decimals: 18
       },
-      blockExplorerUrls: ["https://sepolia-explorer.giwa.io"]
+      blockExplorerUrls: ["https://sepolia.etherscan.io"]
     };
 
     function show(msg, isError=false){
@@ -60,8 +143,27 @@
     }
 
     useExample.addEventListener('click', ()=>{
-      textarea.value = JSON.stringify(GIWA, null, 2);
-      show('Contoh Giwa JSON dimasukkan.');
+      textarea.value = JSON.stringify(SEPOLIA, null, 2);
+      show('Contoh Ethereum Sepolia JSON dimasukkan.');
+    });
+
+    pasteBtn.addEventListener('click', async ()=>{
+      try {
+        const text = await navigator.clipboard.readText();
+        textarea.value = text;
+        show('Berhasil paste dari clipboard.');
+      } catch(e){
+        show('Gagal paste: ' + e.message, true);
+      }
+    });
+
+    copyBtn.addEventListener('click', async ()=>{
+      try {
+        await navigator.clipboard.writeText(textarea.value);
+        show('Teks disalin ke clipboard.');
+      } catch(e){
+        show('Gagal copy: ' + e.message, true);
+      }
     });
 
     async function addOrSwitch(){
@@ -78,7 +180,6 @@
         return;
       }
 
-      // pastikan chainId berbentuk hex
       parsed.chainId = toHexChainId(parsed.chainId);
 
       if (!parsed.chainId || !parsed.rpcUrls){
@@ -87,7 +188,6 @@
       }
 
       try {
-        // coba switch dulu
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId: parsed.chainId }]
@@ -100,7 +200,7 @@
               method: 'wallet_addEthereumChain',
               params: [parsed]
             });
-            show(`${parsed.chainName || parsed.chainId} berhasil ditambahkan dan di-switch ✅`);
+            show(`${parsed.chainName || parsed.chainId} berhasil ditambahkan ✅`);
           } catch (addError){
             console.error(addError);
             show('Gagal menambahkan chain: ' + (addError.message || addError), true);
@@ -114,8 +214,8 @@
 
     btn.addEventListener('click', addOrSwitch);
 
-    // auto isi contoh default Giwa
-    textarea.value = JSON.stringify(GIWA, null, 2);
+    // auto isi contoh default
+    textarea.value = JSON.stringify(SEPOLIA, null, 2);
   </script>
 </body>
 </html>
