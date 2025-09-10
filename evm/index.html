@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Add / Switch EVM Chain</title>
+  <title>Tambahkan Jaringan EVM Kustom</title>
   <style>
     body{
       font-family:system-ui,Segoe UI,Roboto,Arial;
@@ -20,15 +20,19 @@
       border-radius:16px;
       box-shadow:0 8px 20px rgba(0,0,0,0.08);
     }
-    h2{
-      margin-top:0;
-      font-size:1.4rem;
-      color:#1f2937;
+    h2{margin-top:0;font-size:1.5rem;color:#1f2937}
+    .subtitle{margin-top:6px;margin-bottom:14px;color:#374151}
+    .hint{
+      display:inline-block;
+      margin-bottom:14px;
+      padding:6px 10px;
+      background:#f3f4f6;
+      border-radius:8px;
+      font-size:0.9rem;
+      cursor:pointer;
     }
-    .textarea-wrap{
-      position:relative;
-      margin-top:12px;
-    }
+    .hint:hover{background:#e5e7eb}
+    .textarea-wrap{position:relative;margin-top:12px}
     textarea{
       width:100%;
       height:220px;
@@ -47,6 +51,11 @@
       display:flex;
       gap:6px;
     }
+    .overlay-bottom{
+      position:absolute;
+      bottom:8px;
+      right:8px;
+    }
     .icon-btn{
       background:rgba(255,255,255,0.9);
       border:1px solid #e5e7eb;
@@ -58,12 +67,8 @@
       box-shadow:0 2px 4px rgba(0,0,0,0.06);
       transition:background 0.2s;
     }
-    .icon-btn:hover{ background:#f3f4f6; }
-    .actions{
-      margin-top:16px;
-      display:flex;
-      gap:10px;
-    }
+    .icon-btn:hover{background:#f3f4f6}
+    .actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
     button.main{
       padding:0.8rem 1.4rem;
       font-size:1rem;
@@ -75,34 +80,32 @@
       box-shadow:0 4px 10px rgba(37,99,235,0.2);
       transition:background 0.2s;
     }
-    button.main:hover{ background:#1e40af; }
-    .msg{
-      margin-top:14px;
-      font-size:0.95rem;
-      color:#374151;
-      white-space:pre-wrap;
-      min-height:1.2em;
-    }
+    button.main:hover{background:#1e40af}
+    .msg{margin-top:14px;font-size:0.95rem;color:#374151;white-space:pre-wrap;min-height:1.2em}
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>Tambah / Switch EVM Chain</h2>
-    <p>Tempel konfigurasi JSON chain sesuai <b>EIP-3085</b>, atau gunakan contoh, lalu klik tombol untuk menambahkan / berpindah jaringan.</p>
-    
+    <h2>Tambahkan Jaringan EVM Kustom</h2>
+    <p class="subtitle">Tempel konfigurasi dan Tambahkan Jaringan</p>
+    <span id="hint" class="hint">ubah teks jaringan menjadi JSON dengan format sesuai EIP-3085</span>
+
     <div class="textarea-wrap">
       <textarea id="chainJson"></textarea>
       <div class="overlay-btns">
         <button id="pasteBtn" class="icon-btn" title="Paste">📋</button>
         <button id="copyBtn" class="icon-btn" title="Copy">📑</button>
       </div>
+      <div class="overlay-bottom">
+        <button id="clearBtn" class="icon-btn" title="Clear">✖️</button>
+      </div>
     </div>
-    
+
     <div class="actions">
       <button id="useExample" class="main" style="background:#059669">Gunakan Contoh Sepolia</button>
       <button id="addSwitchBtn" class="main">Add / Switch Chain</button>
     </div>
-    
+
     <div class="msg" id="msg"></div>
   </div>
 
@@ -113,10 +116,12 @@
     const textarea = document.getElementById('chainJson');
     const pasteBtn = document.getElementById('pasteBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const hint = document.getElementById('hint');
 
-    // Contoh Ethereum Sepolia (EIP-3085 format)
+    // Contoh Ethereum Sepolia
     const SEPOLIA = {
-      chainId: "0xaa36a7", // 11155111
+      chainId: "0xaa36a7",
       chainName: "Ethereum Sepolia",
       rpcUrls: ["https://rpc.sepolia.org"],
       nativeCurrency: {
@@ -163,6 +168,21 @@
         show('Teks disalin ke clipboard.');
       } catch(e){
         show('Gagal copy: ' + e.message, true);
+      }
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      textarea.value = "";
+      show('Textarea dikosongkan.');
+    });
+
+    hint.addEventListener('click', async ()=>{
+      const text = hint.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        show('Hint tersalin: "'+text+'"');
+      } catch(e){
+        show('Gagal copy hint: ' + e.message, true);
       }
     });
 
