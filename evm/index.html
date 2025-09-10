@@ -34,7 +34,7 @@
   <label>Status</label>
   <pre id="log">Ready.
 
-Notes: • This page calls window.ethereum.request and requires a web3 wallet (e.g. MetaMask). • The JSON you paste can be either EIP-3085-format or the simpler format used earlier. • Example simple format keys supported: networkName, rpcUrl, chainId, currencySymbol, blockExplorerUrl • EIP-3085 full format supported too: chainId (hex or number), chainName, rpcUrls, nativeCurrency, blockExplorerUrls </pre> </div>
+Notes: • Halaman ini memanggil window.ethereum.request dan butuh wallet (MetaMask atau setara). • Gunakan format JSON sesuai EIP-3085 agar popup muncul. </pre> </div>
 
   </div>  <script>
     const textarea = document.getElementById('chainJson')
@@ -43,12 +43,17 @@ Notes: • This page calls window.ethereum.request and requires a web3 wallet (e
     const useExample = document.getElementById('useExample')
     const clearBtn = document.getElementById('clearBtn')
 
+    // Gunakan format resmi EIP-3085
     const example = {
-      "networkName": "Giwa Network",
-      "rpcUrl": "https://sepolia-rpc.giwa.io",
-      "chainId": 91342,
-      "currencySymbol": "ETH",
-      "blockExplorerUrl": "https://sepolia-explorer.giwa.io"
+      chainId: "0x1650e", // 91342 dalam hex
+      chainName: "Giwa Network",
+      rpcUrls: ["https://sepolia-rpc.giwa.io"],
+      nativeCurrency: {
+        name: "Ethereum",
+        symbol: "ETH",
+        decimals: 18
+      },
+      blockExplorerUrls: ["https://sepolia-explorer.giwa.io"]
     }
 
     function log(...args){
@@ -66,100 +71,46 @@ Notes: • This page calls window.ethereum.request and requires a web3 wallet (e
       log('Cleared textarea')
     })
 
-    function toHexChainId(value){
-      // Accept number or hex string
-      if (typeof value === 'number') return '0x' + value.toString(16)
-      if (typeof value === 'string'){
-        if (value.startsWith('0x')) return value
-        // maybe decimal string
-        const n = Number(value)
-        if (!Number.isNaN(n)) return '0x' + n.toString(16)
-        // fallback, return as-is
-        return value
-      }
-      return value
-    }
-
-    function buildEip3085FromSimple(obj){
-      // map the simple keys to EIP-3085 fields
-      const chainId = obj.chainId ?? obj.chain_id
-      const rpcUrl = obj.rpcUrl ?? obj.rpc_url ?? obj.rpcUrls ?? obj.rpc_url_s ?? obj.rpc
-      const name = obj.networkName ?? obj.chainName ?? obj.chain_name
-      const symbol = obj.currencySymbol ?? obj.nativeCurrency?.symbol ?? (obj.currency && obj.currency.symbol)
-      const explorer = obj.blockExplorerUrl ?? obj.block_explorer_url ?? obj.blockExplorerUrls
-
-      const params = {
-        chainId: toHexChainId(chainId),
-        chainName: name || 'Custom Network',
-        rpcUrls: rpcUrl ? (Array.isArray(rpcUrl) ? rpcUrl : [rpcUrl]) : [],
-        nativeCurrency: {
-          name: symbol ? symbol : 'ETH',
-          symbol: symbol ? symbol : 'ETH',
-          decimals: 18
-        },
-        blockExplorerUrls: explorer ? (Array.isArray(explorer) ? explorer : [explorer]) : []
-      }
-      return params
-    }
-
     async function addChain(){
       if (!window.ethereum){
-        log('window.ethereum not found. Install MetaMask or another EIP-1193 wallet.')
-        alert('No web3 wallet detected. Install MetaMask or use a compatible browser extension.')
+        log('window.ethereum not found. Install MetaMask atau wallet lain.')
+        alert('Tidak ada wallet terdeteksi. Install MetaMask atau ekstensi kompatibel.')
         return
       }
 
       let userInput = textarea.value.trim()
-      if (!userInput){ log('No input.'); alert('Paste a JSON configuration first.'); return }
+      if (!userInput){ log('No input.'); alert('Tempel konfigurasi JSON dulu.'); return }
 
       let parsed
       try{
         parsed = JSON.parse(userInput)
       }catch(e){
         log('JSON parse error:', e.message)
-        alert('Invalid JSON. Check formatting in the textarea.')
+        alert('JSON tidak valid.')
         return
       }
 
-      // If parsed already looks like EIP-3085, use it; otherwise convert
-      let addParams
-      if (parsed && (parsed.chainId && (parsed.rpcUrls || parsed.rpcUrl || parsed.rpc_urls)) ){
-        // normalize
-        addParams = {
-          chainId: toHexChainId(parsed.chainId),
-          chainName: parsed.chainName || parsed.networkName || 'Custom Network',
-          rpcUrls: parsed.rpcUrls || (parsed.rpcUrl ? (Array.isArray(parsed.rpcUrl) ? parsed.rpcUrl : [parsed.rpcUrl]) : []),
-          nativeCurrency: parsed.nativeCurrency || { name: parsed.currencyName || parsed.currencySymbol || 'ETH', symbol: parsed.currencySymbol || 'ETH', decimals: parsed.nativeCurrency?.decimals ?? 18 },
-          blockExplorerUrls: parsed.blockExplorerUrls || (parsed.blockExplorerUrl ? (Array.isArray(parsed.blockExplorerUrl) ? parsed.blockExplorerUrl : [parsed.blockExplorerUrl]) : [])
-        }
-      } else {
-        addParams = buildEip3085FromSimple(parsed)
-      }
-
-      // minimal validation
-      if (!addParams.chainId || addParams.rpcUrls.length === 0){
-        log('Missing chainId or rpcUrls in parsed params:', JSON.stringify(addParams))
-        alert('Parsed configuration must include chainId and at least one rpcUrl.')
+      if (!parsed.chainId || !parsed.rpcUrls){
+        log('Config tidak sesuai EIP-3085:', JSON.stringify(parsed))
+        alert('Config harus sesuai format EIP-3085 (ada chainId dan rpcUrls).')
         return
       }
 
-      log('Requesting wallet_addEthereumChain with:', JSON.stringify(addParams))
+      log('Requesting wallet_addEthereumChain with:', JSON.stringify(parsed))
       addBtn.disabled = true
       try{
         await window.ethereum.request({
           method: 'wallet_addEthereumChain',
-          params: [addParams]
+          params: [parsed]
         })
-        log('Success: chain added or user approved addition')
-        alert('Chain added (or approved) successfully.')
+        log('Success: chain added')
+        alert('Chain berhasil ditambahkan.')
       }catch(err){
-        // nicer error reporting for common cases
-        log('Error', err && err.message ? err.message : err)
-        if (err && err.code === 4001){
-          log('User rejected the request (4001)')
-          alert('Action rejected by user in wallet.')
+        log('Error', err?.message || err)
+        if (err?.code === 4001){
+          alert('User menolak aksi di wallet.')
         } else {
-          alert('Failed to add chain. See console/log for details.\nError: ' + (err && err.message ? err.message : String(err)))
+          alert('Gagal menambahkan chain: ' + (err?.message || String(err)))
         }
       } finally {
         addBtn.disabled = false
@@ -168,7 +119,7 @@ Notes: • This page calls window.ethereum.request and requires a web3 wallet (e
 
     addBtn.addEventListener('click', addChain)
 
-    // insert example by default (optional)
+    // Auto isi contoh default
     textarea.value = JSON.stringify(example, null, 2)
   </script></body>
 </html>
