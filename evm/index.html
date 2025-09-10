@@ -1,51 +1,39 @@
-<!doctype html>
-
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Add Ethereum Chain — Giwa Network</title>
+  <title>Add / Switch Chain</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px;background:#f7fafc;color:#0f172a}
-    .card{max-width:900px;margin:0 auto;background:white;padding:20px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.08)}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:24px;background:#f7fafc;color:#111827}
+    .card{max-width:700px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
     textarea{width:100%;height:160px;padding:12px;border-radius:8px;border:1px solid #e6eef6;font-family:monospace;resize:vertical}
-    label{font-weight:600;margin-bottom:6px;display:block}
-    .row{display:flex;gap:10px;align-items:center}
-    button{background:#0ea5a0;border:none;padding:10px 16px;border-radius:8px;color:white;font-weight:600;cursor:pointer}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    pre{background:#0f172a;color:#e6eef6;padding:12px;border-radius:8px;overflow:auto}
-    .muted{color:#64748b;font-size:13px}
-    .out{margin-top:12px}
+    button{padding:0.7rem 1.2rem;font-size:1rem;border-radius:10px;border:0;background:#2563eb;color:white;cursor:pointer}
+    button:active{transform:translateY(1px)}
+    .msg{margin-top:12px;text-align:left;font-size:0.95rem;color:#374151;white-space:pre-wrap}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Add Chain to Wallet</h1>
-    <p class="muted">Tempel JSON konfigurasi chain di bawah (atau gunakan tombol <em>Use example</em>), lalu klik <strong>Add Chain</strong> untuk memicu wallet seperti MetaMask.</p><label for="chainJson">Chain JSON</label>
-<textarea id="chainJson" aria-label="Chain JSON"></textarea>
+    <h2>Tambah / Switch Jaringan</h2>
+    <p>Tempel konfigurasi JSON (format EIP-3085) lalu klik tombol.</p>
+    <textarea id="chainJson"></textarea>
+    <div style="margin-top:12px">
+      <button id="useExample">Gunakan Giwa Example</button>
+      <button id="addSwitchBtn">Add / Switch Chain</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
 
-<div class="row out">
-  <button id="useExample">Use example</button>
-  <button id="addChainBtn">Add Chain</button>
-  <button id="clearBtn">Clear</button>
-</div>
+  <script>
+    const msgEl = document.getElementById('msg');
+    const btn = document.getElementById('addSwitchBtn');
+    const useExample = document.getElementById('useExample');
+    const textarea = document.getElementById('chainJson');
 
-<div class="out">
-  <label>Status</label>
-  <pre id="log">Ready.
-
-Notes: • Halaman ini memanggil window.ethereum.request dan butuh wallet (MetaMask atau setara). • Gunakan format JSON sesuai EIP-3085 agar popup muncul. </pre> </div>
-
-  </div>  <script>
-    const textarea = document.getElementById('chainJson')
-    const logEl = document.getElementById('log')
-    const addBtn = document.getElementById('addChainBtn')
-    const useExample = document.getElementById('useExample')
-    const clearBtn = document.getElementById('clearBtn')
-
-    // Gunakan format resmi EIP-3085
-    const example = {
-      chainId: "0x1650e", // 91342 dalam hex
+    // Contoh Giwa dalam format EIP-3085
+    const GIWA = {
+      chainId: "0x1650e", // 91342
       chainName: "Giwa Network",
       rpcUrls: ["https://sepolia-rpc.giwa.io"],
       nativeCurrency: {
@@ -54,72 +42,67 @@ Notes: • Halaman ini memanggil window.ethereum.request dan butuh wallet (MetaM
         decimals: 18
       },
       blockExplorerUrls: ["https://sepolia-explorer.giwa.io"]
-    }
+    };
 
-    function log(...args){
-      const time = new Date().toLocaleTimeString()
-      logEl.textContent = `[${time}] ` + args.join(' ') + '\n' + logEl.textContent
+    function show(msg, isError=false){
+      msgEl.textContent = msg;
+      msgEl.style.color = isError ? '#b91c1c' : '#374151';
     }
 
     useExample.addEventListener('click', ()=>{
-      textarea.value = JSON.stringify(example, null, 2)
-      log('Inserted example JSON')
-    })
+      textarea.value = JSON.stringify(GIWA, null, 2);
+      show('Contoh Giwa JSON dimasukkan.');
+    });
 
-    clearBtn.addEventListener('click', ()=>{
-      textarea.value = ''
-      log('Cleared textarea')
-    })
-
-    async function addChain(){
+    async function addOrSwitch(){
       if (!window.ethereum){
-        log('window.ethereum not found. Install MetaMask atau wallet lain.')
-        alert('Tidak ada wallet terdeteksi. Install MetaMask atau ekstensi kompatibel.')
-        return
+        show('Ethereum provider tidak ditemukan. Pasang MetaMask.', true);
+        return;
       }
 
-      let userInput = textarea.value.trim()
-      if (!userInput){ log('No input.'); alert('Tempel konfigurasi JSON dulu.'); return }
-
-      let parsed
-      try{
-        parsed = JSON.parse(userInput)
-      }catch(e){
-        log('JSON parse error:', e.message)
-        alert('JSON tidak valid.')
-        return
+      let parsed;
+      try {
+        parsed = JSON.parse(textarea.value);
+      } catch(e){
+        show('JSON tidak valid: ' + e.message, true);
+        return;
       }
 
       if (!parsed.chainId || !parsed.rpcUrls){
-        log('Config tidak sesuai EIP-3085:', JSON.stringify(parsed))
-        alert('Config harus sesuai format EIP-3085 (ada chainId dan rpcUrls).')
-        return
+        show('Config harus ada chainId dan rpcUrls (format EIP-3085).', true);
+        return;
       }
 
-      log('Requesting wallet_addEthereumChain with:', JSON.stringify(parsed))
-      addBtn.disabled = true
-      try{
+      try {
+        // Coba switch dulu
         await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [parsed]
-        })
-        log('Success: chain added')
-        alert('Chain berhasil ditambahkan.')
-      }catch(err){
-        log('Error', err?.message || err)
-        if (err?.code === 4001){
-          alert('User menolak aksi di wallet.')
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: parsed.chainId }]
+        });
+        show('Berhasil switch ke ' + parsed.chainName + ' ✅');
+      } catch (switchError){
+        if (switchError.code === 4902 || /Unrecognized chain/i.test(switchError.message)){
+          try {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [parsed]
+            });
+            show('Chain berhasil ditambahkan dan di-switch ✅');
+          } catch (addError){
+            console.error(addError);
+            show('Gagal menambahkan chain: ' + (addError.message || addError), true);
+          }
         } else {
-          alert('Gagal menambahkan chain: ' + (err?.message || String(err)))
+          console.error(switchError);
+          show('Gagal switch: ' + (switchError.message || switchError), true);
         }
-      } finally {
-        addBtn.disabled = false
       }
     }
 
-    addBtn.addEventListener('click', addChain)
+    btn.addEventListener('click', addOrSwitch);
 
-    // Auto isi contoh default
-    textarea.value = JSON.stringify(example, null, 2)
-  </script></body>
+    // auto isi Giwa default
+    textarea.value = JSON.stringify(GIWA, null, 2);
+  </script>
+</body>
 </html>
