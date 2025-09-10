@@ -22,7 +22,7 @@
     }
     h2{margin-top:0;font-size:1.5rem;color:#1f2937}
     .subtitle{margin-top:6px;margin-bottom:14px;color:#374151}
-    .hint{
+    .copy-hint{
       display:inline-block;
       margin-bottom:14px;
       padding:6px 10px;
@@ -31,7 +31,7 @@
       font-size:0.9rem;
       cursor:pointer;
     }
-    .hint:hover{background:#e5e7eb}
+    .copy-hint:hover{background:#e5e7eb}
     .textarea-wrap{position:relative;margin-top:12px}
     textarea{
       width:100%;
@@ -43,6 +43,9 @@
       font-size:0.95rem;
       resize:vertical;
       box-sizing:border-box;
+    }
+    textarea::placeholder{
+      color:#9ca3af;
     }
     .overlay-btns{
       position:absolute;
@@ -57,30 +60,33 @@
       right:8px;
     }
     .icon-btn{
-      background:rgba(255,255,255,0.9);
-      border:1px solid #e5e7eb;
+      background:#fff;
+      border:1px solid #d1d5db;
       border-radius:8px;
       padding:6px;
       cursor:pointer;
       font-size:1rem;
       line-height:1;
-      box-shadow:0 2px 4px rgba(0,0,0,0.06);
-      transition:background 0.2s;
+      transition:background 0.2s, border-color 0.2s;
     }
-    .icon-btn:hover{background:#f3f4f6}
+    .icon-btn:hover{background:#f9fafb;border-color:#9ca3af}
     .actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
     button.main{
       padding:0.8rem 1.4rem;
       font-size:1rem;
       border-radius:10px;
-      border:0;
-      background:#2563eb;
-      color:white;
+      border:2px solid #2563eb;
+      background:#fff;
+      color:#2563eb;
       cursor:pointer;
-      box-shadow:0 4px 10px rgba(37,99,235,0.2);
-      transition:background 0.2s;
+      transition:background 0.2s,color 0.2s;
     }
-    button.main:hover{background:#1e40af}
+    button.main:hover{background:#2563eb;color:#fff}
+    button.main.green{
+      border-color:#059669;
+      color:#059669;
+    }
+    button.main.green:hover{background:#059669;color:#fff}
     .msg{margin-top:14px;font-size:0.95rem;color:#374151;white-space:pre-wrap;min-height:1.2em}
   </style>
 </head>
@@ -88,10 +94,22 @@
   <div class="card">
     <h2>Tambahkan Jaringan EVM Kustom</h2>
     <p class="subtitle">Tempel konfigurasi dan Tambahkan Jaringan</p>
-    <span id="hint" class="hint">ubah teks jaringan menjadi JSON dengan format sesuai EIP-3085</span>
+    <span id="hint" class="copy-hint">
+      Pastikan anda <b>mengubah teks jaringan menjadi JSON dengan format sesuai EIP-3085</b> terlebih dahulu.
+    </span>
 
     <div class="textarea-wrap">
-      <textarea id="chainJson"></textarea>
+      <textarea id="chainJson" placeholder='{
+  "chainId": "",
+  "chainName": "",
+  "rpcUrls": [""],
+  "nativeCurrency": {
+    "name": "",
+    "symbol": "",
+    "decimals": 18
+  },
+  "blockExplorerUrls": [""]
+}'></textarea>
       <div class="overlay-btns">
         <button id="pasteBtn" class="icon-btn" title="Paste">📋</button>
         <button id="copyBtn" class="icon-btn" title="Copy">📑</button>
@@ -102,7 +120,7 @@
     </div>
 
     <div class="actions">
-      <button id="useExample" class="main" style="background:#059669">Gunakan Contoh Sepolia</button>
+      <button id="useExample" class="main green">Gunakan Contoh Sepolia</button>
       <button id="addSwitchBtn" class="main">Add / Switch Chain</button>
     </div>
 
@@ -119,14 +137,13 @@
     const clearBtn = document.getElementById('clearBtn');
     const hint = document.getElementById('hint');
 
-    // Contoh Ethereum Sepolia
     const SEPOLIA = {
       chainId: "0xaa36a7",
       chainName: "Ethereum Sepolia",
       rpcUrls: ["https://rpc.sepolia.org"],
       nativeCurrency: {
         name: "Sepolia Ether",
-        symbol: "SEP",
+        symbol: "ETH",
         decimals: 18
       },
       blockExplorerUrls: ["https://sepolia.etherscan.io"]
@@ -177,12 +194,12 @@
     });
 
     hint.addEventListener('click', async ()=>{
-      const text = hint.textContent;
+      const text = "ubah teks jaringan menjadi JSON dengan format sesuai EIP-3085";
       try {
         await navigator.clipboard.writeText(text);
-        show('Hint tersalin: "'+text+'"');
+        show('Teks caption tersalin: "'+text+'"');
       } catch(e){
-        show('Gagal copy hint: ' + e.message, true);
+        show('Gagal copy caption: ' + e.message, true);
       }
     });
 
@@ -233,9 +250,6 @@
     }
 
     btn.addEventListener('click', addOrSwitch);
-
-    // auto isi contoh default
-    textarea.value = JSON.stringify(SEPOLIA, null, 2);
   </script>
 </body>
 </html>
