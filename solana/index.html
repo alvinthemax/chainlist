@@ -178,7 +178,9 @@
         </div>
     </div>
 
-    <script type="module">
+    <!-- Load Solana Web3.js library first to avoid import issues -->
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+    <script>
         const statusEl = document.getElementById("status");
         const connectBtn = document.getElementById("connectBtn");
         const sendBtn = document.getElementById("sendBtn");
@@ -254,8 +256,9 @@
                     return;
                 }
                 
-                // Import the web3.js library
-                const solanaWeb3 = await import("https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js");
+                // Use the global solanaWeb3 object (loaded via script tag)
+                // This fixes the "solanaWeb3.Connection is not a constructor" error
+                const solanaWeb3 = window.solanaWeb3;
                 
                 // Use the correct RPC URL - FIXED: clusterApiUrl is not a function in this version
                 const RPC_URL = "https://api.testnet.solana.com";
