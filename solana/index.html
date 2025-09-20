@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Testnet Transaction Sender</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #7bd4ff;
+            font-size: 28px;
+        }
+        .description {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ccc;
+            line-height: 1.5;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #7bd4ff;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(123, 212, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #7bd4ff;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #connectBtn {
+            background: linear-gradient(135deg, #00b4db, #0083b0);
+            color: white;
+        }
+        #connectBtn:hover {
+            background: linear-gradient(135deg, #0083b0, #00b4db);
+            transform: translateY(-2px);
+        }
+        #sendBtn {
+            background: linear-gradient(135deg, #00c853, #009624);
+            color: white;
+        }
+        #sendBtn:hover {
+            background: linear-gradient(135deg, #009624, #00c853);
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        #status {
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+        .success {
+            color: #4caf50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #7bd4ff;
+        }
+        .wallet-info {
+            background: rgba(123, 212, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #aaa;
+            font-size: 14px;
+        }
+        .iframe-notice {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Solana Testnet Transaction Sender</h1>
+        <p class="description">
+            Connect your Phantom wallet and send a test transaction on the Solana testnet.
+        </p>
+        
+        <div id="iframeNotice" class="iframe-notice">
+            Running in iframe mode. Wallet operations will be handled by the parent window.
+        </div>
+        
+        <div id="walletInfo" class="wallet-info">
+            <strong>Connected Wallet:</strong> <span id="walletAddress"></span>
+        </div>
+        
+        <div class="input-group">
+            <label for="toAddr">Destination Address:</label>
+            <input id="toAddr" type="text" value="4Nd1mCw7JhZpJ4b16zvY7o5gm8smVGkZc9odjvyKkuXt" placeholder="Enter destination address"/>
+        </div>
+        
+        <div class="button-group">
+            <button id="connectBtn">Connect Phantom Wallet</button>
+            <button id="sendBtn" disabled>Send 0.001 SOL</button>
+        </div>
+        
+        <div class="status-container">
+            <div id="status" class="info">Please connect your Phantom wallet to get started.</div>
+        </div>
+        
+        <div class="footer">
+            <p>This dApp works on the Solana testnet. Make sure your wallet is set to testnet mode.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        const statusEl = document.getElementById("status");
+        const connectBtn = document.getElementById("connectBtn");
+        const sendBtn = document.getElementById("sendBtn");
+        const walletInfo = document.getElementById("walletInfo");
+        const walletAddress = document.getElementById("walletAddress");
+        const iframeNotice = document.getElementById("iframeNotice");
+        
+        // Check if we're in iframe mode
+        const isIframeMode = typeof window.walletRequest === "function";
+        
+        if (isIframeMode) {
+            iframeNotice.style.display = "block";
+            sendBtn.disabled = false; // Enable send button in iframe mode
+        }
+        
+        // Set status message with appropriate color
+        function setStatus(msg, type = "info") {
+            statusEl.textContent = msg;
+            statusEl.className = type;
+        }
+        
+        // Check if Phantom wallet is installed (for standalone mode)
+        function checkPhantom() {
+            if (!window.solana || !window.solana.isPhantom) {
+                setStatus("Phantom wallet not detected. Please install Phantom wallet from https://phantom.app/", "error");
+                connectBtn.disabled = true;
+                if (!isIframeMode) {
+                    sendBtn.disabled = true;
+                }
+                return false;
+            }
+            return true;
+        }
+        
+        // Connect to Phantom wallet (standalone mode)
+        async function connectStandalone() {
+            if (!checkPhantom()) return;
+            
+            try {
+                setStatus("Connecting to Phantom wallet...", "info");
+                
+                // Request connection
+                const resp = await window.solana.connect();
+                const pubKey = resp.publicKey.toString();
+                
+                // Update UI
+                setStatus("Connected to Phantom wallet successfully!", "success");
+                walletAddress.textContent = pubKey;
+                walletInfo.style.display = "block";
+                sendBtn.disabled = false;
+                
+            } catch (err) {
+                setStatus("Connection error: " + err.message, "error");
+            }
+        }
+        
+        // Send transaction (standalone mode)
+        async function sendStandalone() {
+            if (!window.solana || !window.solana.isPhantom) {
+                setStatus("Phantom wallet not detected.", "error");
+                return;
+            }
+            
+            try {
+                setStatus("Preparing transaction...", "info");
+                
+                const provider = window.solana;
+                const toAddr = document.getElementById("toAddr").value;
+                
+                // Validate destination address
+                if (!toAddr) {
+                    setStatus("Please enter a destination address.", "error");
+                    return;
+                }
+                
+                // Import the web3.js library
+                const solanaWeb3 = await import("https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.iife.min.js");
+                
+                // Use the correct RPC URL - FIXED: clusterApiUrl is not a function in this version
+                const RPC_URL = "https://api.testnet.solana.com";
+                const connection = new solanaWeb3.Connection(RPC_URL, "confirmed");
+                
+                // Get public key from connected wallet
+                const pubkey = provider.publicKey;
+                
+                // Create transaction
+                const tx = new solanaWeb3.Transaction().add(
+                    solanaWeb3.SystemProgram.transfer({
+                        fromPubkey: pubkey,
+                        toPubkey: new solanaWeb3.PublicKey(toAddr),
+                        lamports: 0.001 * solanaWeb3.LAMPORTS_PER_SOL,
+                    })
+                );
+                
+                // Set transaction parameters
+                tx.feePayer = pubkey;
+                const { blockhash } = await connection.getLatestBlockhash();
+                tx.recentBlockhash = blockhash;
+                
+                setStatus("Requesting signature...", "info");
+                
+                // Request signature from Phantom wallet
+                const signedTx = await provider.signTransaction(tx);
+                
+                setStatus("Sending transaction...", "info");
+                
+                // Send the signed transaction
+                const sig = await connection.sendRawTransaction(signedTx.serialize());
+                
+                // Confirm transaction
+                const confirmation = await connection.confirmTransaction(sig, "confirmed");
+                
+                if (confirmation.value.err) {
+                    setStatus("Transaction failed: " + confirmation.value.err.toString(), "error");
+                } else {
+                    setStatus("Transaction successful!\nSignature: " + sig, "success");
+                }
+                
+            } catch (err) {
+                setStatus("Error: " + err.message, "error");
+                console.error(err);
+            }
+        }
+        
+        // Proxy to parent (iframe mode)
+        function connectProxy() {
+            setStatus("Requesting connection from parent window...", "info");
+            window.walletRequest("solana_connect", { network: "testnet" });
+        }
+        
+        function sendProxy() {
+            const toAddr = document.getElementById("toAddr").value;
+            if (!toAddr) {
+                setStatus("Please enter a destination address.", "error");
+                return;
+            }
+            setStatus("Requesting transaction from parent window...", "info");
+            window.walletRequest("solana_sendTx", { to: toAddr, amount: 0.001 });
+        }
+        
+        // Event listeners for buttons
+        connectBtn.addEventListener("click", () => {
+            if (isIframeMode) {
+                connectProxy();
+            } else {
+                connectStandalone();
+            }
+        });
+        
+        sendBtn.addEventListener("click", () => {
+            if (isIframeMode) {
+                sendProxy();
+            } else {
+                sendStandalone();
+            }
+        });
+        
+        // Listen for events from parent window (iframe mode)
+        window.addEventListener("wallet_proxy", (ev) => {
+            const data = ev.detail;
+            if (data.status === "solana_connected") {
+                setStatus("Connected: " + data.payload.address, "success");
+                walletAddress.textContent = data.payload.address;
+                walletInfo.style.display = "block";
+            } else if (data.status === "solana_tx") {
+                setStatus("Transaction successful!\nSignature: " + data.payload.signature, "success");
+            } else if (data.status === "wallet_error") {
+                setStatus("Error: " + data.payload, "error");
+            }
+        });
+        
+        // Initialize
+        if (!isIframeMode) {
+            checkPhantom();
+        } else {
+            setStatus("Running in iframe mode. Ready to connect.", "info");
+        }
+    </script>
+</body>
+</html>
